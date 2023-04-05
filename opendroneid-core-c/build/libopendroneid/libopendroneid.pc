@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=
+libdir=
+includedir=
+
+Name: libopendroneid
+Version: 0.2
+Description: OpenDroneID reference library
+Requires.private: 
+Libs.private: -lm
+Libs: -L${libdir} -lopendroneid
+Cflags: -I${includedir}

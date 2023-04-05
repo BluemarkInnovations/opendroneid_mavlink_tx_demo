@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC  -D_FORTIFY_SOURCE=2 -fstack-protector     -fno-delete-null-pointer-checks -fwrapv -O0 -Wall -Wdouble-promotion     -Wno-address-of-packed-member -Wextra -shared -Wl,-soname,libopendroneid.so -o libopendroneid.so CMakeFiles/opendroneid.dir/opendroneid.c.o CMakeFiles/opendroneid.dir/wifi.c.o 
