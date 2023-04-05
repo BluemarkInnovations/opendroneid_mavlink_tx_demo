@@ -1,17 +1,17 @@
 //
-// demo application to send MAVLink open drone ID commands 
+// demo application to send MAVLink open drone ID commands
 // to a MAVLink capable Open Drone ID transponder
 //
-// (c) Bluemark Innovations BV 
+// (c) Bluemark Innovations BV
 // MIT license
 //
 // The code has been tested with the BlueMark DroneBeacon MAVLink
 //  transponder, where an USB-to-UART adapter was connected to
-// /dev/ttyUSB1 and 9600 baud rate. 
+// /dev/ttyUSB1 and 9600 baud rate.
 //
 // if you want to change this, please UART_PORT and UART_BAUDRATE accordingly
 // on line 40/41
- 
+
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include <stdio.h>
@@ -37,18 +37,18 @@
 #define MAVLINK_SYSTEM_ID       3
 #define MAVLINK_COMPONENT_ID    1
 
-#define UART_PORT 				"/dev/ttyUSB1"
-#define UART_BAUDRATE			B9600
+#define UART_PORT 				"/dev/ttyUSB0"
+#define UART_BAUDRATE			B57600
 
 pthread_mutex_t  serial_port_lock;
 int uart0_FS_RDWR = -1;
 
-static uint64_t current_timestamp_ms() 
+static uint64_t current_timestamp_ms()
 {   //return current timestamp in milliseconds
     struct timeval te;
     gettimeofday(&te, NULL); // get current time
     uint64_t milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // calculate milliseconds
-        
+
     return milliseconds;
 }
 
@@ -132,9 +132,9 @@ static void print_mavlink_basicID(mavlink_open_drone_id_basic_id_t *basic_id)
 
 //send OpenDrone ID messages to Remote ID transponder
 void MAVLink_send_open_drone_ID_messages()
-{	
+{
 	if( uart0_FS_RDWR != -1 )
-	{		
+	{
 		mavlink_message_t msg = { 0 };
 		uint8_t tx_buffer[MAVLINK_MAX_PACKET_LEN];
 		memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);
@@ -153,9 +153,9 @@ void MAVLink_send_open_drone_ID_messages()
 		print_mavlink_basicID(&basic_id);
 		memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);
 		mavlink_msg_open_drone_id_basic_id_encode(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, &msg, &basic_id);
-		
+
 		message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);
-																		
+
 		pthread_mutex_lock(&serial_port_lock);
 		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);
 		pthread_mutex_unlock(&serial_port_lock);
@@ -163,9 +163,9 @@ void MAVLink_send_open_drone_ID_messages()
 		{
 			printf("ERROR: UART TX error\n");
 		}
-		
+
 		usleep(25000); //sleep some time to allow transponder to receive and decode message
-		
+
 		//OpenDrone ID self ID message
 		mavlink_open_drone_id_self_id_t selfID = {
 			.description_type = MAV_ODID_DESC_TYPE_TEXT,
@@ -176,7 +176,7 @@ void MAVLink_send_open_drone_ID_messages()
 
 		mavlink_msg_open_drone_id_self_id_encode(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, &msg, &selfID);
 		message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);
-		
+
 		pthread_mutex_lock(&serial_port_lock);
 		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);
 		pthread_mutex_unlock(&serial_port_lock);
@@ -186,17 +186,17 @@ void MAVLink_send_open_drone_ID_messages()
 		}
 
 		usleep(25000); //sleep some time to allow transponder to receive and decode message
-		
+
 		//OpenDrone ID system message
 		mavlink_open_drone_id_system_t system = {
 			.operator_location_type = MAV_ODID_OPERATOR_LOCATION_TYPE_TAKEOFF,
-			.classification_type = MAV_ODID_CLASSIFICATION_TYPE_EU,			
+			.classification_type = MAV_ODID_CLASSIFICATION_TYPE_EU,
 			.operator_latitude = (int32_t) (52.2564348 * 1E7),
 			.operator_longitude = (int32_t) (6.8296092 * 1E7),
 			.area_count = 1,
 			.area_radius = 0,
 			.area_ceiling = -1000,
-			.area_floor = -1000, 
+			.area_floor = -1000,
 			.category_eu = MAV_ODID_CATEGORY_EU_CERTIFIED,
 			.class_eu = MAV_ODID_CLASS_EU_CLASS_5,
 			.operator_altitude_geo = 1.3f,
@@ -204,7 +204,7 @@ void MAVLink_send_open_drone_ID_messages()
 
 		printf("\n\n------------------------System------------------------\n\n");
 		print_mavlink_system(&system);
-		
+
 		memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);
 		mavlink_msg_open_drone_id_system_encode(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, &msg, &system);
 		message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);
@@ -216,11 +216,11 @@ void MAVLink_send_open_drone_ID_messages()
 		{
 			printf("ERROR: UART TX error\n");
 		}
-		
+
 		//OpenDrone ID operator message
 		mavlink_open_drone_id_operator_id_t operatorID = {
 			.operator_id_type = MAV_ODID_OPERATOR_ID_TYPE_CAA };
-			
+
 		char operator_id[] = "ABCDEFGHJK0123456789";
 		memcpy(operatorID.operator_id, operator_id, sizeof(operatorID.operator_id));
 
@@ -228,10 +228,10 @@ void MAVLink_send_open_drone_ID_messages()
 		print_mavlink_operatorID(&operatorID);
 
 		mavlink_msg_open_drone_id_operator_id_encode(MAVLINK_SYSTEM_ID,	MAVLINK_COMPONENT_ID, &msg, &operatorID);
-		message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);        
+		message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);
 
 		pthread_mutex_lock(&serial_port_lock);
-		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);		
+		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);
 		pthread_mutex_unlock(&serial_port_lock);
 		if (tx_bytes != message_bytes)
 		{
@@ -243,85 +243,85 @@ void MAVLink_send_open_drone_ID_messages()
 		memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);
 		mavlink_msg_open_drone_id_operator_id_encode(MAVLINK_SYSTEM_ID,	MAVLINK_COMPONENT_ID, &msg, &operatorID);
 
-		message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);  
+		message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);
 		pthread_mutex_lock(&serial_port_lock);
-		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);	
+		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);
 		pthread_mutex_unlock(&serial_port_lock);
 		if (tx_bytes != message_bytes)
 		{
 			printf("ERROR: UART TX error\n");
 		}
-		
-			
-		printf("\n\n---------------------Authentication---------------------\n\n");		
-		
+
+
+		printf("\n\n---------------------Authentication---------------------\n\n");
+
 		//generate auth message containing 3 pages
 		mavlink_open_drone_id_authentication_t auth0 = {
 			.data_page = 0,
-			.authentication_type = MAV_ODID_AUTH_TYPE_UAS_ID_SIGNATURE,			
+			.authentication_type = MAV_ODID_AUTH_TYPE_UAS_ID_SIGNATURE,
 			.last_page_index = 2,
 			.length = 17,
 			.timestamp = 23000000 };
-				
+
 		memset(auth0.authentication_data,1,ODID_AUTH_PAGE_ZERO_DATA_SIZE); //set data to all 1s
-		
+
 		mavlink_open_drone_id_authentication_t auth1 = {
-			.data_page = 1,	
-			.authentication_type = MAV_ODID_AUTH_TYPE_UAS_ID_SIGNATURE };										
-		
+			.data_page = 1,
+			.authentication_type = MAV_ODID_AUTH_TYPE_UAS_ID_SIGNATURE };
+
 		memset(auth1.authentication_data,2,ODID_AUTH_PAGE_NONZERO_DATA_SIZE); //set data to all 2s
-						
+
 		mavlink_open_drone_id_authentication_t auth2 = {
 			.data_page = 2,
 			.authentication_type = MAV_ODID_AUTH_TYPE_UAS_ID_SIGNATURE };
-						
+
 		memset(auth2.authentication_data,3,ODID_AUTH_PAGE_NONZERO_DATA_SIZE); //set data to all 3s
-		
+
 		print_mavlink_auth(&auth0); //print page 0
 		print_mavlink_auth(&auth1); //print page 1
 		print_mavlink_auth(&auth2); //print page 2
-    
-		
-        memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);        
-        mavlink_msg_open_drone_id_authentication_encode(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, &msg, &auth0);                
 
-        message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);  
+
+        memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);
+        mavlink_msg_open_drone_id_authentication_encode(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, &msg, &auth0);
+
+        message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);
 		pthread_mutex_lock(&serial_port_lock);
-		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);	
+		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);
 		pthread_mutex_unlock(&serial_port_lock);
 		if (tx_bytes != message_bytes)
 		{
 			printf("ERROR: UART TX error\n");
 		}
-		
+
 		usleep(25000); //sleep some time to allow transponder to receive and decode message
-		
-		memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);        
-        mavlink_msg_open_drone_id_authentication_encode(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, &msg, &auth1);                
 
-        message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);  
+		memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);
+        mavlink_msg_open_drone_id_authentication_encode(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, &msg, &auth1);
+
+        message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);
 		pthread_mutex_lock(&serial_port_lock);
-		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);	
+		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);
 		pthread_mutex_unlock(&serial_port_lock);
 		if (tx_bytes != message_bytes)
 		{
 			printf("ERROR: UART TX error\n");
 		}
-		
+
 		usleep(25000); //sleep some time to allow transponder to receive and decode message
-		
-		memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);        
-        mavlink_msg_open_drone_id_authentication_encode(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, &msg, &auth2);                
 
-        message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);  
+		memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);
+        mavlink_msg_open_drone_id_authentication_encode(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, &msg, &auth2);
+
+        message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);
 		pthread_mutex_lock(&serial_port_lock);
-		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);	
+		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);
 		pthread_mutex_unlock(&serial_port_lock);
 		if (tx_bytes != message_bytes)
 		{
 			printf("ERROR: UART TX error\n");
 		}
-		
+
 		//OpenDrone ID location message
 		unsigned int ts_odid_hour = (unsigned)time(NULL) % (60*60*24)/3600; //only hour part of current time
 		unsigned int ts_odid_minute = (unsigned)time(NULL) % (60*60)/60; //only minute part
@@ -343,7 +343,7 @@ void MAVLink_send_open_drone_ID_messages()
 			.barometer_accuracy = MAV_ODID_VER_ACC_3_METER,
 			.speed_accuracy = MAV_ODID_SPEED_ACC_1_METERS_PER_SECOND,
 			.timestamp_accuracy = MAV_ODID_TIME_ACC_0_1_SECOND
-		};		
+		};
 
 		printf("\n\n------------------------Location------------------------\n\n");
 		print_mavlink_location(&location);
@@ -351,7 +351,7 @@ void MAVLink_send_open_drone_ID_messages()
 		mavlink_msg_open_drone_id_location_encode(MAVLINK_SYSTEM_ID,
 		MAVLINK_COMPONENT_ID,
 		&msg, &location);
-		message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);		
+		message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);
 
 		pthread_mutex_lock(&serial_port_lock);
 		tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);
@@ -368,64 +368,73 @@ void MAVLink_send_open_drone_ID_messages()
 		printf("could not open serial interface!\n");
 	}
 
-	
+
 }
 
-//thread to parse received MAVLink messages and send every second/1 Hz heartbeat messages. 
-void *serial_port_receive(void *ptr) 
+//thread to parse received MAVLink messages and send every second/1 Hz heartbeat messages.
+void *serial_port_receive(void *ptr)
 {
 	uint8_t rx_buffer[MAVLINK_MAX_PACKET_LEN];
 	uint64_t time_last_heartbeat_ms = 0;
-	
+
 	while(1)
-	{		
+	{
 		union {
-			mavlink_heartbeat_t heartbeat;			
+			mavlink_heartbeat_t heartbeat;
 		} msg_rx;
-							
-		usleep(100000);
-		
+
+		usleep(25000);
+
 		memset(rx_buffer,0,MAVLINK_MAX_PACKET_LEN);
 		pthread_mutex_lock(&serial_port_lock);
 		int rx_length = read(uart0_FS_RDWR, (void*)rx_buffer, MAVLINK_MAX_PACKET_LEN);
 		pthread_mutex_unlock(&serial_port_lock);
-		
+
 		if (rx_length > 0)
-		{				
-			rx_buffer[rx_length] = '\0';			
-			mavlink_message_t message;			
+		{
+			rx_buffer[rx_length] = '\0';
+			mavlink_message_t message;
 			mavlink_status_t status;
+            //printf("rx_buffer: %s\n",rx_buffer);
 			int i = 0;
 			while (i < rx_length)
 			{
-				mavlink_message_t message;			
+				mavlink_message_t message;
 				mavlink_status_t status;
-				
+
 				if (mavlink_parse_char(MAVLINK_COMM_0, rx_buffer[i++], &message, &status))
-				{						
+				{
+                    //printf("MSG ID: %i\n",message.msgid);
 					switch ((int) message.msgid)
 					{
-						case MAVLINK_MSG_ID_HEARTBEAT:							
+						case MAVLINK_MSG_ID_HEARTBEAT:
 							mavlink_msg_heartbeat_decode(&message, &msg_rx.heartbeat);
 							//printf("heartbeat ver 0x%X status 0x%X autopilot 0x%X type 0x%X\n",msg_rx.heartbeat.mavlink_version, msg_rx.heartbeat.system_status, msg_rx.heartbeat.autopilot, msg_rx.heartbeat.type);
-							printf("#");
+							//printf("#");
+                            printf("heartbeat message received\n");
 							fflush(stdout);
-							break;														
+							break;
+                        case MAVLINK_MSG_ID_OPEN_DRONE_ID_ARM_STATUS:
+							mavlink_msg_heartbeat_decode(&message, &msg_rx.heartbeat);
+							//printf("heartbeat ver 0x%X status 0x%X autopilot 0x%X type 0x%X\n",msg_rx.heartbeat.mavlink_version, msg_rx.heartbeat.system_status, msg_rx.heartbeat.autopilot, msg_rx.heartbeat.type);
+							printf("open drone ID ARM status message received\n");
+							fflush(stdout);
+							break;
 						default:
 							printf("unknown message\n");
 							printf("received MAVLink message: 0x%X len %i | flags 0x%X 0x%X seq %i sysid 0x%X compid 0x%X msgid %i\n",message.magic,message.len,message.incompat_flags,message.compat_flags,message.seq,message.sysid,message.compid,message.msgid);
 							break;
 					}
 				}
-			}		
+			}
 		}
-		
+
 		//transmit heart beat message at 1 Hz
-		uint64_t time_ms = current_timestamp_ms(); 
+		uint64_t time_ms = current_timestamp_ms();
         if ((time_ms - time_last_heartbeat_ms) > (1000 - 25)) //1Hz
         {
 			time_last_heartbeat_ms = time_ms;
-			
+
 			//send new heart beat message
 			mavlink_heartbeat_t heartbeat;
 			heartbeat.type = MAV_TYPE_ODID;
@@ -433,36 +442,36 @@ void *serial_port_receive(void *ptr)
 			heartbeat.base_mode = 0;
 			heartbeat.custom_mode = 0;
 			heartbeat.system_status = MAV_STATE_ACTIVE;
-		
-			mavlink_message_t msg = { 0 };	
+
+			mavlink_message_t msg = { 0 };
 			mavlink_msg_heartbeat_encode(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, &msg, &heartbeat);
 
 			uint8_t tx_buffer[MAVLINK_MAX_PACKET_LEN];
-			memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);			
+			memset(tx_buffer,0,MAVLINK_MAX_PACKET_LEN);
 			int message_bytes = mavlink_msg_to_send_buffer(tx_buffer, &msg);
-			
-			pthread_mutex_lock(&serial_port_lock);	
+
+			pthread_mutex_lock(&serial_port_lock);
 			int tx_bytes = write(uart0_FS_RDWR, tx_buffer, message_bytes);
 			pthread_mutex_unlock(&serial_port_lock);
 			if (tx_bytes != message_bytes)
 			{
 				printf("ERROR: UART TX error\n");
-			} 
+			}
 		}
 	}
 }
-	
+
 int main(int argc, char *argv[] )
 {
 	int result = pthread_mutex_init(&serial_port_lock, NULL);
-	
+
 	pthread_t thread_serial_port_RX;
 	int  iret_serial_port_RX;
 	char *message_serial_port_RX = "Thread receiving MAVLink messages";
-	
+
 	char interface_UART[128]; //interface to use
 	strcpy(interface_UART,UART_PORT);
-	
+
 	if( access(interface_UART, F_OK ) != -1 )
 	{
 		uart0_FS_RDWR = open(interface_UART, O_RDWR | O_NOCTTY | O_NDELAY);		//Open in non blocking read/write mode
@@ -473,7 +482,7 @@ int main(int argc, char *argv[] )
 		}
 		struct termios options;
 		tcgetattr(uart0_FS_RDWR, &options);
-		options.c_cflag = UART_BAUDRATE | CS8 | CLOCAL | CREAD;		
+		options.c_cflag = UART_BAUDRATE | CS8 | CLOCAL | CREAD;
 		options.c_iflag = IGNPAR;
 		options.c_oflag = 0;
 		options.c_lflag = 0;
@@ -483,9 +492,9 @@ int main(int argc, char *argv[] )
 		options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
 
 		tcflush(uart0_FS_RDWR, TCIFLUSH);
-		tcsetattr(uart0_FS_RDWR, TCSANOW, &options);						
+		tcsetattr(uart0_FS_RDWR, TCSANOW, &options);
 	}
-	
+
 	//set timezone to application
 	char buf[80];
 	snprintf(buf, sizeof(buf), "TZ=UTC");
@@ -498,12 +507,12 @@ int main(int argc, char *argv[] )
 	printf("version: %s %s\n", date2,time2);
 
 	iret_serial_port_RX = pthread_create( &thread_serial_port_RX, NULL, serial_port_receive,(void*) message_serial_port_RX);
-			
+
 	while (1)
 	{
 		MAVLink_send_open_drone_ID_messages(); // send message every 10 seconds
 		sleep(10);
 	}
-	
+
 	return 0;
 }
