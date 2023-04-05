@@ -381,6 +381,7 @@ void *serial_port_receive(void *ptr)
 	{
 		union {
 			mavlink_heartbeat_t heartbeat;
+            mavlink_open_drone_id_arm_status_t arm_status;
 		} msg_rx;
 
 		usleep(25000);
@@ -395,7 +396,6 @@ void *serial_port_receive(void *ptr)
 			rx_buffer[rx_length] = '\0';
 			mavlink_message_t message;
 			mavlink_status_t status;
-            //printf("rx_buffer: %s\n",rx_buffer);
 			int i = 0;
 			while (i < rx_length)
 			{
@@ -415,9 +415,9 @@ void *serial_port_receive(void *ptr)
 							fflush(stdout);
 							break;
                         case MAVLINK_MSG_ID_OPEN_DRONE_ID_ARM_STATUS:
-							mavlink_msg_heartbeat_decode(&message, &msg_rx.heartbeat);
+							mavlink_msg_open_drone_id_arm_status_decode(&message, &msg_rx.arm_status);
 							//printf("heartbeat ver 0x%X status 0x%X autopilot 0x%X type 0x%X\n",msg_rx.heartbeat.mavlink_version, msg_rx.heartbeat.system_status, msg_rx.heartbeat.autopilot, msg_rx.heartbeat.type);
-							printf("open drone ID ARM status message received\n");
+							printf("open drone ID ARM status message received: status %i %s\n",msg_rx.arm_status.status, msg_rx.arm_status.error);
 							fflush(stdout);
 							break;
 						default:
