@@ -4,7 +4,7 @@
 
 cd opendroneid-core-c
 rm -R build
-git submodule update --init
+#git submodule update --init
 mkdir build && cd build
 cmake ../.
 make

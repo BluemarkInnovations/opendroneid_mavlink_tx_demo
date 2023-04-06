@@ -1,1 +1,0 @@
-/usr/bin/cc -fPIC  -D_FORTIFY_SOURCE=2 -fstack-protector     -fno-delete-null-pointer-checks -fwrapv -O0 -Wall -Wdouble-promotion     -Wno-address-of-packed-member -Wextra -shared -Wl,-soname,libmav2odid.so -o libmav2odid.so CMakeFiles/mav2odid.dir/mav2odid.c.o CMakeFiles/mav2odid.dir/__/libopendroneid/opendroneid.c.o 
